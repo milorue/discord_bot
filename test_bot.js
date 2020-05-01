@@ -85,9 +85,21 @@ client.on('message', message =>{
             else{
                 
                 champ_data = body
-                champion = champ_data.data[champion_string]
+                if(champion_string === '' || champion_string === undefined){
+                    champion = undefined
+                }
+                else{
+                    if(champ_data === undefined){
+                        champion = undefined
+                    }
+                    else{
+                        champion = champ_data.data[champion_string]
+                    }
+                    
+                }
                 
-                if(champ_data.data === undefined){
+                
+                if(champion === undefined){
                     message.channel.send('Error invalid champion')
                 }
                 else{
