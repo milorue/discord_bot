@@ -89,7 +89,7 @@ client.on('message', message =>{
                     champion = undefined
                 }
                 else{
-                    if(champ_data === undefined){
+                    if(champ_data.data === undefined){
                         champion = undefined
                     }
                     else{
@@ -100,7 +100,7 @@ client.on('message', message =>{
                 
                 
                 if(champion === undefined){
-                    message.channel.send('Error invalid champion')
+                    message.channel.send('Error invalid champion try capitalizing the name')
                 }
                 else{
                     message.channel.send('You searched for a champion named: ' + champion_string)
