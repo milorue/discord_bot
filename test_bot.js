@@ -4,6 +4,9 @@ const client = new Discord.Client();
 
 const request = require('request')
 
+const credentials = require('./discord_credentials')  // hides bot credentials
+const bot_credentials = credentials.discord_bot_key
+
 // universal variables
 
 const leaguePatch ='10.8.1' // set up update cycle for this
@@ -73,6 +76,7 @@ client.on('message', message =>{
         var champion_string = message.content.substr("+champion ".length)
 
         var champion_url = 'https://ddragon.leagueoflegends.com/cdn/' + leaguePatch + '/data/en_US/champion/' + champion_string + '.json'
+        var champion_image = 'https://ddragon.leagueoflegends.com/cdn/img/champion/splash/' + champion_string + '_0.jpg'  
         
 
         request(champion_url, {json: true}, (err, res, body) =>{
@@ -81,36 +85,52 @@ client.on('message', message =>{
             else{
                 
                 champ_data = body
+                champion = champ_data.data[champion_string]
                 
                 if(champ_data.data === undefined){
                     message.channel.send('Error invalid champion')
                 }
                 else{
                     message.channel.send('You searched for a champion named: ' + champion_string)
+                    // console.log(champ_data.data[champion_string].name) // important solution to inputting string into json lookup
+                    var championEmbed = new Discord.MessageEmbed()
+                    .setColor('#000000')
+                    .setTitle(champion.name + ' ' + champion.title)
+                    .setDescription(champion.lore)
+                    .setImage(champion_image)
 
-                }
+                    message.channel.send(championEmbed)
 
-                
-            }
-            
+                }  
+            } 
         })
-        
-        
     }
-    })
+
+    if(message.content.startsWith('+league')){
+       //nothing yet     
+    }
+})
 
 // ====================
 // fun tools and games
 // ====================
 
-// meme grabber - +meme to get a random meme
-// input: none
-// output: string
-// description: returns a random url for a meme pulled from meme-api.herokuapp.com/gimme
+
 
 
     client.on('message', message =>{
         if(!message.guild) return;
+
+        
+    })
+
+    client.on('message', message =>{
+        if(!message.guild) return;
+
+// meme grabber - +meme to get a random meme
+// input: none
+// output: string
+// description: returns a random url for a meme pulled from meme-api.herokuapp.com/gimme
 
         if(message.content.startsWith('+meme')){
             request('https://meme-api.herokuapp.com/gimme', {json: true}, (err, res, body) =>{
@@ -121,26 +141,22 @@ client.on('message', message =>{
                     meme_data = body
 
                     var memeEmbed = new Discord.MessageEmbed()
-                        .setColor('#b04fa6')
-                        .setTitle(meme_data.title)
-                        .setAuthor('Gronk')
-                        .setImage(meme_data.url)
+                    .setColor('#b04fa6')
+                    .setTitle(meme_data.title)
+                    .setAuthor('Gronk')
+                    .setImage(meme_data.url)
 
 
                     message.channel.send(memeEmbed)
-                    
+            
                 }
             })
         }
-    })
 
 // dog photo grabber - +doggo to get a random dog
 // input: none
 // output: string
 // description: returns a random url for a dog picture
-
-    client.on('message', message =>{
-        if(!message.guild) return;
 
         if(message.content.startsWith('+doggo')){
             request('https://api.thedogapi.com/v1/images/search', {json: true}, (err, res, body) =>{
@@ -165,12 +181,87 @@ client.on('message', message =>{
                 }
             })
         }
+
+// rock paper scissors - +rps
+// input: int (1 rock, 2 paper, 3 scissors)
+// output: string
+
+        if(message.content.startsWith('+rps')){
+            var player = message.content.substr('+rps '.length)
+
+            if(player === 'rock' || player === 'paper' || player === 'scissors'){
+                var outcome = rockPaperScissor(player, message)
+                message.channel.send(outcome)
+            }
+            else{
+                message.channel.send('Invalid input please enter rock, paper, or scissors');
+            }
+        }
+
+// insult generator - +insult
+// input: none
+// output: string
+// description: generates a random insult directed at the user
+
+        if(message.content.startsWith('+insult')){
+            request('https://evilinsult.com/generate_insult.php?lang=en&type=json', {json: true}, (err, res, body) =>{
+                if(err){
+                    message.channel.send('Internal server error')
+                }
+                else{
+                    insult_data = body
+                    message.channel.send(insult_data.insult)
+                    
+                }
+            })
+        }
+
+// motivation generator - +motivate
+// input: none
+// output: string
+// description: generates a random motivational affirmation directed at the user
+
+        if(message.content.startsWith('+motivate')){
+            request('https://www.affirmations.dev/', {json: true}, (err, res, body) =>{
+                if(err){
+                    message.channel.send('Internal server error')
+                }
+                else{
+                    motivate_data = body
+                    message.channel.send(motivate_data.affirmation)
+                }
+            })
+        }
+
+// space picture generator - +spacedaily
+// input none
+// output: string
+// description grabs the daily space picture
+
+        if(message.content.startsWith('+spacedaily')){
+            request('https://api.nasa.gov/planetary/apod?api_key=qRSs2dcqLUh8kOcWbhr3YhWak352fxmjAxlVcOZ5', {json: true}, (err, res, body) =>{
+                if(err){
+                    message.channel.send("NASA's servers are broken")
+                }
+                else{
+                    space_data = body
+                    const spaceDailyEmbed = new Discord.MessageEmbed()
+                    .setColor('#b04fa6')
+                    .setTitle(space_data.title)
+                    .setDescription(space_data.explanation)
+                    .setAuthor('Courtesy of NASA')
+                    .setImage(space_data.hdurl)
+                    .setFooter('copyright: ' + space_data.copyright + ' ' + space_data.date)
+
+                    message.channel.send(spaceDailyEmbed)
+                }
+            })
+        }
+
     })
 
 
-    // rock paper scissors - +rps
-    // input: int (1 rock, 2 paper, 3 scissors)
-    // output: string
+        
 
     function convertGuess(guess){
         if(guess === 1){
@@ -301,89 +392,6 @@ client.on('message', message =>{
         }
     }
 
-    client.on('message', message=>{
-        if(message.content.startsWith('+rps')){
-            var player = message.content.substr('+rps '.length)
-
-            if(player === 'rock' || player === 'paper' || player === 'scissors'){
-                var outcome = rockPaperScissor(player, message)
-                message.channel.send(outcome)
-            }
-            else{
-                message.channel.send('Invalid input please enter rock, paper, or scissors');
-            }
-        }
-    })
-
-// insult generator - +insult
-// input: none
-// output: string
-// description: generates a random insult directed at the user
-
-    client.on('message', message=>{
-        if(!message.guild) return;
-        if(message.content.startsWith('+insult')){
-            request('https://evilinsult.com/generate_insult.php?lang=en&type=json', {json: true}, (err, res, body) =>{
-                if(err){
-                    message.channel.send('Internal server error')
-                }
-                else{
-                    insult_data = body
-                    message.channel.send(insult_data.insult)
-                    
-                }
-            })
-        }
-    })
-
-// motivation generator - +motivate
-// input: none
-// output: string
-// description: generates a random motivational affirmation directed at the user
-
-    client.on('message', message=>{
-        if(!message.guild) return;
-        if(message.content.startsWith('+motivate')){
-            request('https://www.affirmations.dev/', {json: true}, (err, res, body) =>{
-                if(err){
-                    message.channel.send('Internal server error')
-                }
-                else{
-                    motivate_data = body
-                    message.channel.send(motivate_data.affirmation)
-                }
-            })
-        }
-    })
-
-// space picture generator - +spacedaily
-// input none
-// output: string
-// description grabs the daily space picture
-
-    client.on('message', message=>{
-        if(!message.guild) return;
-        if(message.content.startsWith('+spacedaily')){
-            request('https://api.nasa.gov/planetary/apod?api_key=qRSs2dcqLUh8kOcWbhr3YhWak352fxmjAxlVcOZ5', {json: true}, (err, res, body) =>{
-                if(err){
-                    message.channel.send("NASA's servers are broken")
-                }
-                else{
-                    space_data = body
-                    const spaceDailyEmbed = new Discord.MessageEmbed()
-                    .setColor('#b04fa6')
-                    .setTitle(space_data.title)
-                    .setDescription(space_data.explanation)
-                    .setAuthor('Courtesy of NASA')
-                    .setImage(space_data.hdurl)
-                    .setFooter('copyright: ' + space_data.copyright + ' ' + space_data.date)
-
-                    message.channel.send(spaceDailyEmbed)
-                }
-            })
-        }
-    })
-
     client.on('message', message =>{
         if(message.content === 'brian'){
             message.channel.send('is gay')
@@ -393,4 +401,4 @@ client.on('message', message =>{
 
 
 // application auth    
-client.login('NzA1MTI3NTg4NDE4Mjg5Nzg1.XqnLjA.mDxCE99t_YoQlyj9upZu8HPhrEU')
+client.login(bot_credentials)
